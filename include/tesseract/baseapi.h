@@ -108,6 +108,13 @@ public:
   /** Set the name of the bonus output files. Needed only for debugging. */
   void SetOutputName(const char *name);
 
+  /** Request the compute backend used for LSTM inference. */
+  void SetComputeBackend(ComputeBackend backend);
+  /** Return the backend last requested by the API user. */
+  ComputeBackend GetRequestedComputeBackend() const;
+  /** Return the backend currently active for recognition. */
+  ComputeBackend GetActiveComputeBackend() const;
+
   /**
    * Set the value of an internal "parameter."
    * Supply the name of the parameter and the value as a string, just as
@@ -783,6 +790,7 @@ protected:
   std::string datapath_;             ///< Current location of tessdata.
   std::string language_;             ///< Last initialized language.
   OcrEngineMode last_oem_requested_; ///< Last ocr language mode requested.
+  ComputeBackend last_backend_requested_; ///< Last LSTM compute backend requested.
   bool recognition_done_;            ///< page_res_ contains recognition data.
 
   /**

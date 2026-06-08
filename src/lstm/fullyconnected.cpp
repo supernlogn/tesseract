@@ -101,6 +101,12 @@ int FullyConnected::RemapOutputs(int old_no, const std::vector<int> &code_map) {
 // Converts a float network to an int network.
 void FullyConnected::ConvertToInt() {
   weights_.ConvertToInt();
+  compute_backend_ = CB_CPU;
+}
+
+ComputeBackend FullyConnected::SetComputeBackend(ComputeBackend backend) {
+  compute_backend_ = weights_.SetComputeBackend(backend);
+  return compute_backend_;
 }
 
 // Provides debug output on the weights.

@@ -28,6 +28,7 @@
 #include "helpers.h"
 #include "imagedata.h"
 #include "input.h"
+#include "cudabackend.h"
 #include "lstm.h"
 #include "normalis.h"
 #include "pageres.h"
@@ -63,7 +64,10 @@ LSTMRecognizer::LSTMRecognizer()
     , adam_beta_(0.0f)
     , dict_(nullptr)
     , search_(nullptr)
-    , debug_win_(nullptr) {}
+    , debug_win_(nullptr)
+    , requested_compute_backend_(CB_DEFAULT)
+    , active_compute_backend_(CB_CPU)
+    , compute_backend_warning_issued_(false) {}
 
 LSTMRecognizer::~LSTMRecognizer() {
   delete network_;
@@ -86,6 +90,7 @@ bool LSTMRecognizer::Load(const ParamsVectors *params, const std::string &lang,
   }
   // Allow it to run without a dictionary.
   LoadDictionary(params, lang, mgr);
+  ApplyComputeBackend();
   return true;
 }
 
@@ -173,7 +178,37 @@ bool LSTMRecognizer::DeSerialize(const TessdataManager *mgr, TFile *fp) {
   }
   network_->SetRandomizer(&randomizer_);
   network_->CacheXScaleFactor(network_->XScaleFactor());
+  ApplyComputeBackend();
   return true;
+}
+
+void LSTMRecognizer::SetComputeBackend(ComputeBackend backend) {
+  requested_compute_backend_ = backend == CB_CUDA ? CB_CUDA : (backend == CB_CPU ? CB_CPU : CB_DEFAULT);
+  ApplyComputeBackend();
+}
+
+void LSTMRecognizer::ApplyComputeBackend() {
+  ComputeBackend resolved = requested_compute_backend_ == CB_CUDA ? CB_CUDA : CB_CPU;
+  active_compute_backend_ = resolved;
+  if (network_ == nullptr) {
+    return;
+  }
+  if (resolved == CB_CUDA && (IsTensorFlow() || IsIntMode())) {
+    active_compute_backend_ = CB_CPU;
+  } else {
+    active_compute_backend_ = network_->SetComputeBackend(resolved);
+  }
+  if (resolved == CB_CUDA && active_compute_backend_ != CB_CUDA && !compute_backend_warning_issued_) {
+    std::string error;
+    CudaInferenceAvailable(&error);
+    if (error.empty()) {
+      tprintf("CUDA backend unavailable for this recognizer, falling back to CPU\n");
+    } else {
+      tprintf("CUDA backend unavailable for this recognizer, falling back to CPU (%s)\n",
+              error.c_str());
+    }
+    compute_backend_warning_issued_ = true;
+  }
 }
 
 // Loads the charsets from mgr.

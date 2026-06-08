@@ -81,6 +81,20 @@ Developers can use `libtesseract` [C](https://github.com/tesseract-ocr/tesseract
 [C++](https://github.com/tesseract-ocr/tesseract/blob/main/include/tesseract/baseapi.h) API to build their own application. If you need bindings to `libtesseract` for other programming languages, please see the
 [wrapper](https://tesseract-ocr.github.io/tessdoc/AddOns.html#tesseract-wrappers) section in the AddOns documentation.
 
+### Optional CUDA backend
+
+Tesseract can now be built with an optional CUDA inference backend for supported
+native LSTM models. Enable it with CMake using `-DENABLE_CUDA=ON`, or with
+autotools using `--enable-cuda`, and request it at runtime through the public
+API compute-backend selector or by setting `lstm_compute_backend=2`.
+
+Current limitations:
+
+* CUDA support is inference-only.
+* The initial CUDA path targets native float LSTM models; unsupported models
+  fall back to the CPU path automatically.
+* Input preprocessing and beam-search decoding remain on CPU.
+
 Documentation of Tesseract generated from source code by doxygen can be found on [tesseract-ocr.github.io](https://tesseract-ocr.github.io/).
 
 ## Support

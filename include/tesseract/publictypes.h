@@ -276,6 +276,19 @@ enum OcrEngineMode {
   OEM_COUNT                    // Number of OEMs
 };
 
+/**
+ * Selects the compute backend used for LSTM inference.
+ *
+ * The default keeps the current CPU execution path unless an application
+ * explicitly opts in to a different backend.
+ */
+enum ComputeBackend {
+  CB_DEFAULT, // Keep Tesseract's default execution backend.
+  CB_CPU,     // Run LSTM inference on the CPU.
+  CB_CUDA,    // Run supported LSTM inference paths on NVIDIA CUDA.
+  CB_COUNT
+};
+
 } // namespace tesseract.
 
 #endif // TESSERACT_CCSTRUCT_PUBLICTYPES_H_

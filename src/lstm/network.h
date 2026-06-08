@@ -18,6 +18,8 @@
 #ifndef TESSERACT_LSTM_NETWORK_H_
 #define TESSERACT_LSTM_NETWORK_H_
 
+#include <tesseract/publictypes.h>
+
 #include "helpers.h"
 #include "matrix.h"
 #include "networkio.h"
@@ -192,6 +194,12 @@ public:
   // Converts a float network to an int network.
   virtual void ConvertToInt() {}
 
+  // Selects the compute backend used for forward inference.
+  virtual ComputeBackend SetComputeBackend(ComputeBackend backend);
+  ComputeBackend compute_backend() const {
+    return compute_backend_;
+  }
+
   // Provides a pointer to a TRand for any networks that care to use it.
   // Note that randomizer is a borrowed pointer that should outlive the network
   // and should not be deleted by any of the networks.
@@ -307,6 +315,7 @@ protected:
   ScrollView *forward_win_;  // Recognition debug display window.
   ScrollView *backward_win_; // Training debug display window.
   TRand *randomizer_;        // Random number generator.
+  ComputeBackend compute_backend_;
 };
 
 } // namespace tesseract.

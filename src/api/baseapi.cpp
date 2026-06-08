@@ -171,6 +171,7 @@ TessBaseAPI::TessBaseAPI()
     , block_list_(nullptr)
     , page_res_(nullptr)
     , last_oem_requested_(OEM_DEFAULT)
+    , last_backend_requested_(CB_DEFAULT)
     , recognition_done_(false)
     , rect_left_(0)
     , rect_top_(0)
@@ -202,6 +203,34 @@ void TessBaseAPI::SetInputName(const char *name) {
 /** Set the name of the output files. Needed only for debugging. */
 void TessBaseAPI::SetOutputName(const char *name) {
   output_file_ = name ? name : "";
+}
+
+void TessBaseAPI::SetComputeBackend(ComputeBackend backend) {
+  switch (backend) {
+    case CB_CUDA:
+      last_backend_requested_ = CB_CUDA;
+      break;
+    case CB_CPU:
+      last_backend_requested_ = CB_CPU;
+      break;
+    default:
+      last_backend_requested_ = CB_DEFAULT;
+      break;
+  }
+  if (tesseract_ != nullptr) {
+    tesseract_->SetRequestedComputeBackend(last_backend_requested_);
+  }
+}
+
+ComputeBackend TessBaseAPI::GetRequestedComputeBackend() const {
+  return last_backend_requested_;
+}
+
+ComputeBackend TessBaseAPI::GetActiveComputeBackend() const {
+  if (tesseract_ == nullptr) {
+    return CB_CPU;
+  }
+  return tesseract_->ActiveComputeBackend();
 }
 
 bool TessBaseAPI::SetVariable(const char *name, const char *value) {
@@ -329,6 +358,7 @@ int TessBaseAPI::Init(const char *data, int data_size, const char *language, Ocr
   if (tesseract_ == nullptr) {
     reset_classifier = false;
     tesseract_ = new Tesseract;
+    tesseract_->SetRequestedComputeBackend(last_backend_requested_);
     if (reader != nullptr) {
       reader_ = reader;
     }
@@ -351,6 +381,7 @@ int TessBaseAPI::Init(const char *data, int data_size, const char *language, Ocr
 
   language_ = language;
   last_oem_requested_ = oem;
+  tesseract_->SetRequestedComputeBackend(last_backend_requested_);
 
 #ifndef DISABLED_LEGACY_ENGINE
   // For same language and datapath, just reset the adaptive classifier.

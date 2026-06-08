@@ -466,6 +466,11 @@ AS_IF([test "$enable_doc" != "no"], [
 AC_CHECK_TYPES([wchar_t],,, [#include "wchar.h"])
 AC_CHECK_TYPES([long long int])
 
+AC_ARG_ENABLE([cuda],
+  [AS_HELP_STRING([--enable-cuda], [enable CUDA backend for LSTM inference @<:@default=no@:>@])],
+  [enable_cuda=$enableval],
+  [enable_cuda=no])
+
 # ----------------------------------------
 # Test auxiliary packages
 # ----------------------------------------
@@ -537,6 +542,24 @@ fi
 
 PKG_CHECK_MODULES([pangocairo], [pangocairo], [], [false])
 PKG_CHECK_MODULES([pangoft2], [pangoft2], [], [false])
+
+CUDA_CPPFLAGS=
+CUDA_LIBS=
+AS_IF([test "x$enable_cuda" = xyes], [
+  AC_CHECK_HEADERS([cuda_runtime_api.h cublas_v2.h], [], [
+    AC_MSG_FAILURE([--enable-cuda was given, but CUDA headers were not found])
+  ])
+  AC_CHECK_LIB([cudart], [cudaGetDeviceCount], [], [
+    AC_MSG_FAILURE([--enable-cuda was given, but libcudart was not found])
+  ])
+  AC_CHECK_LIB([cublas], [cublasCreate_v2], [], [
+    AC_MSG_FAILURE([--enable-cuda was given, but libcublas was not found])
+  ])
+  AC_DEFINE([HAVE_CUDA], [1], [Enable CUDA backend])
+  CUDA_LIBS="-lcudart -lcublas"
+])
+AC_SUBST([CUDA_CPPFLAGS])
+AC_SUBST([CUDA_LIBS])
 
 # ----------------------------------------
 # Final Tasks and Output

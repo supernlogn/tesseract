@@ -101,6 +101,7 @@ option(GRAPHICS_DISABLED "Disable disable graphics (ScrollView)" OFF)
 option(DISABLED_LEGACY_ENGINE "Disable the legacy OCR engine" OFF)
 option(ENABLE_LTO "Enable link-time optimization" OFF)
 option(FAST_FLOAT "Enable float for LSTM" ON)
+option(ENABLE_CUDA "Enable CUDA backend for LSTM inference" OFF)
 option(ENABLE_NATIVE
        "Enable optimization for host CPU (could break HW compatibility)" OFF)
 # see
@@ -528,6 +529,13 @@ else()
       include_directories(${CURL_INCLUDE_DIRS})
     endif(CURL_FOUND)
   endif(DISABLE_CURL)
+  if(ENABLE_CUDA)
+    find_package(CUDAToolkit QUIET)
+    if(NOT CUDAToolkit_FOUND)
+      message(FATAL_ERROR "ENABLE_CUDA was requested, but CUDAToolkit was not found.")
+    endif()
+    set(HAVE_CUDA ON)
+  endif()
 endif()
 
 # ##############################################################################
@@ -613,6 +621,7 @@ message(STATUS "Build with libarchive support [HAVE_LIBARCHIVE]: "
                "${HAVE_LIBARCHIVE}")
 message(STATUS "Build with libcurl support [HAVE_LIBCURL]: ${HAVE_LIBCURL}")
 message(STATUS "Enable float for LSTM [FAST_FLOAT]: ${FAST_FLOAT}")
+message(STATUS "Enable CUDA backend [ENABLE_CUDA]: ${ENABLE_CUDA}")
 message(STATUS "Enable optimization for host CPU (could break HW compatibility)"
                " [ENABLE_NATIVE]: ${ENABLE_NATIVE}")
 message(STATUS "Disable disable graphics (ScrollView) [GRAPHICS_DISABLED]: "
@@ -931,6 +940,9 @@ if(CURL_FOUND)
     target_link_libraries(libtesseract PUBLIC ${CURL_LIBRARIES})
   endif()
 endif(CURL_FOUND)
+if(HAVE_CUDA)
+  target_link_libraries(libtesseract PRIVATE CUDA::cudart CUDA::cublas)
+endif()
 
 set_target_properties(
   libtesseract PROPERTIES VERSION

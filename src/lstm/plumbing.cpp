@@ -69,6 +69,17 @@ void Plumbing::ConvertToInt() {
   for (auto &i : stack_) {
     i->ConvertToInt();
   }
+  compute_backend_ = CB_CPU;
+}
+
+ComputeBackend Plumbing::SetComputeBackend(ComputeBackend backend) {
+  compute_backend_ = backend;
+  for (auto &i : stack_) {
+    if (i->SetComputeBackend(backend) != backend) {
+      compute_backend_ = CB_CPU;
+    }
+  }
+  return compute_backend_;
 }
 
 // Provides a pointer to a TRand for any networks that care to use it.

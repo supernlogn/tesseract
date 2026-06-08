@@ -169,6 +169,18 @@ void TessBaseAPISetOutputName(TessBaseAPI *handle, const char *name) {
   handle->SetOutputName(name);
 }
 
+void TessBaseAPISetComputeBackend(TessBaseAPI *handle, TessComputeBackend backend) {
+  handle->SetComputeBackend(static_cast<tesseract::ComputeBackend>(backend));
+}
+
+TessComputeBackend TessBaseAPIGetRequestedComputeBackend(const TessBaseAPI *handle) {
+  return static_cast<TessComputeBackend>(handle->GetRequestedComputeBackend());
+}
+
+TessComputeBackend TessBaseAPIGetActiveComputeBackend(const TessBaseAPI *handle) {
+  return static_cast<TessComputeBackend>(handle->GetActiveComputeBackend());
+}
+
 BOOL TessBaseAPISetVariable(TessBaseAPI *handle, const char *name, const char *value) {
   return static_cast<int>(handle->SetVariable(name, value));
 }
