@@ -225,7 +225,11 @@ void WeightMatrix::ConvertToInt() {
 }
 
 ComputeBackend WeightMatrix::SetComputeBackend(ComputeBackend backend) {
-  if (backend != CB_CUDA || int_mode_) {
+  if (int_mode_) {
+    compute_backend_ = CB_CPU;
+    return compute_backend_;
+  }
+  if (backend != CB_CUDA) {
     compute_backend_ = CB_CPU;
     return compute_backend_;
   }
@@ -425,7 +429,6 @@ void WeightMatrix::MatrixDotVector(const TFloat *u, TFloat *v) const {
   if (compute_backend_ == CB_CUDA) {
     if (cuda_matrix_ == nullptr) {
       cuda_matrix_ = new CudaMatrix();
-      cuda_dirty_ = true;
     }
     std::string error;
     if (cuda_matrix_->MatrixDotVector(wf_, u, v, &error)) {

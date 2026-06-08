@@ -183,7 +183,17 @@ bool LSTMRecognizer::DeSerialize(const TessdataManager *mgr, TFile *fp) {
 }
 
 void LSTMRecognizer::SetComputeBackend(ComputeBackend backend) {
-  requested_compute_backend_ = backend == CB_CUDA ? CB_CUDA : (backend == CB_CPU ? CB_CPU : CB_DEFAULT);
+  switch (backend) {
+    case CB_CUDA:
+      requested_compute_backend_ = CB_CUDA;
+      break;
+    case CB_CPU:
+      requested_compute_backend_ = CB_CPU;
+      break;
+    default:
+      requested_compute_backend_ = CB_DEFAULT;
+      break;
+  }
   ApplyComputeBackend();
 }
 

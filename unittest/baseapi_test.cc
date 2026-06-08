@@ -19,6 +19,7 @@
 #include <tesseract/baseapi.h>
 
 #include <allheaders.h>
+#include "cudabackend.h"
 #include "gmock/gmock-matchers.h"
 
 #include <memory>
@@ -251,6 +252,10 @@ TEST_F(TesseractTest, LSTMComputeBackendFallbackStillRecognizes) {
   trim(truth_text);
   EXPECT_STREQ(truth_text.c_str(), ocr_text.c_str());
   EXPECT_NE(tesseract::CB_DEFAULT, api.GetActiveComputeBackend());
+  std::string cuda_error;
+  if (!CudaInferenceAvailable(&cuda_error)) {
+    EXPECT_EQ(tesseract::CB_CPU, api.GetActiveComputeBackend());
+  }
   src_pix.destroy();
 }
 

@@ -121,6 +121,8 @@ bool CudaMatrix::EnsureWeights(const GENERIC_2D_ARRAY<TFloat> &weights, std::str
     return false;
   }
   int rows = weights.dim1();
+  // The last column stores the bias term, so only the non-bias weights are
+  // uploaded to the GEMV matrix.
   int cols = weights.dim2() - 1;
   if (rows == rows_ && cols == cols_ && device_weights_ != nullptr) {
     return true;
@@ -188,6 +190,7 @@ bool CudaMatrix::MatrixDotVector(const GENERIC_2D_ARRAY<TFloat> &weights, const 
     return false;
   }
   for (int r = 0; r < rows_; ++r) {
+    // Add the bias term on CPU after the GPU matrix-vector multiply.
     output[r] += weights[r][cols_];
   }
   return true;
