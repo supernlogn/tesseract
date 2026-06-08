@@ -503,29 +503,29 @@ Dict &Tesseract::getDict() {
     if (lstm_recognizer_ && lstm_recognizer_->GetDict()) {
       return *lstm_recognizer_->GetDict();
     }
-
-    void Tesseract::SetRequestedComputeBackend(ComputeBackend backend) {
-      lstm_compute_backend.set_value(static_cast<int>(NormalizeComputeBackend(static_cast<int>(backend))));
-      if (lstm_recognizer_ != nullptr) {
-        lstm_recognizer_->SetComputeBackend(RequestedComputeBackend());
-      }
-      for (auto &lang : sub_langs_) {
-        lang->SetRequestedComputeBackend(RequestedComputeBackend());
-      }
-    }
-
-    ComputeBackend Tesseract::RequestedComputeBackend() const {
-      return NormalizeComputeBackend(static_cast<int>(lstm_compute_backend));
-    }
-
-    ComputeBackend Tesseract::ActiveComputeBackend() const {
-      if (lstm_recognizer_ != nullptr) {
-        return lstm_recognizer_->ActiveComputeBackend();
-      }
-      return CB_CPU;
-    }
   }
   return Classify::getDict();
+}
+
+void Tesseract::SetRequestedComputeBackend(ComputeBackend backend) {
+  lstm_compute_backend.set_value(static_cast<int>(NormalizeComputeBackend(static_cast<int>(backend))));
+  if (lstm_recognizer_ != nullptr) {
+    lstm_recognizer_->SetComputeBackend(RequestedComputeBackend());
+  }
+  for (auto &lang : sub_langs_) {
+    lang->SetRequestedComputeBackend(RequestedComputeBackend());
+  }
+}
+
+ComputeBackend Tesseract::RequestedComputeBackend() const {
+  return NormalizeComputeBackend(static_cast<int>(lstm_compute_backend));
+}
+
+ComputeBackend Tesseract::ActiveComputeBackend() const {
+  if (lstm_recognizer_ != nullptr) {
+    return lstm_recognizer_->ActiveComputeBackend();
+  }
+  return CB_CPU;
 }
 
 void Tesseract::Clear() {

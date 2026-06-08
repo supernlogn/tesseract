@@ -111,14 +111,14 @@ void CudaMatrix::Invalidate() {
   cols_ = 0;
 }
 
+bool CudaMatrix::Prepare(const GENERIC_2D_ARRAY<TFloat> &weights, std::string *error) {
+  return EnsureWeights(weights, error);
+}
+
 bool CudaMatrix::EnsureWeights(const GENERIC_2D_ARRAY<TFloat> &weights, std::string *error) {
 #if defined(HAVE_CUDA) && defined(FAST_FLOAT)
   if (!CudaEnvironment::Instance().Available(error)) {
     return false;
-  }
-
-  bool CudaMatrix::Prepare(const GENERIC_2D_ARRAY<TFloat> &weights, std::string *error) {
-    return EnsureWeights(weights, error);
   }
   int rows = weights.dim1();
   int cols = weights.dim2() - 1;
