@@ -18,6 +18,8 @@
 #ifndef TESSERACT_LSTM_LSTMRECOGNIZER_H_
 #define TESSERACT_LSTM_LSTMRECOGNIZER_H_
 
+#include <tesseract/publictypes.h>
+
 #include "ccutil.h"
 #include "helpers.h"
 #include "matrix.h"
@@ -94,6 +96,13 @@ public:
   // Returns true if the network is a TensorFlow network.
   bool IsTensorFlow() const {
     return network_->type() == NT_TENSORFLOW;
+  }
+  void SetComputeBackend(ComputeBackend backend);
+  ComputeBackend RequestedComputeBackend() const {
+    return requested_compute_backend_;
+  }
+  ComputeBackend ActiveComputeBackend() const {
+    return active_compute_backend_;
   }
   // Returns a vector of layer ids that can be passed to other layer functions
   // to access a specific layer.
@@ -364,6 +373,11 @@ protected:
   // == Debugging parameters.==
   // Recognition debug display window.
   ScrollView *debug_win_;
+  ComputeBackend requested_compute_backend_;
+  ComputeBackend active_compute_backend_;
+  bool compute_backend_warning_issued_;
+
+  void ApplyComputeBackend();
 };
 
 } // namespace tesseract.

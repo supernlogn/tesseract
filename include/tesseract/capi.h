@@ -46,6 +46,7 @@ typedef tesseract::PageIterator TessPageIterator;
 typedef tesseract::ResultIterator TessResultIterator;
 typedef tesseract::MutableIterator TessMutableIterator;
 typedef tesseract::ChoiceIterator TessChoiceIterator;
+typedef tesseract::ComputeBackend TessComputeBackend;
 typedef tesseract::OcrEngineMode TessOcrEngineMode;
 typedef tesseract::PageSegMode TessPageSegMode;
 typedef tesseract::PageIteratorLevel TessPageIteratorLevel;
@@ -62,6 +63,11 @@ typedef struct TessPageIterator TessPageIterator;
 typedef struct TessResultIterator TessResultIterator;
 typedef struct TessMutableIterator TessMutableIterator;
 typedef struct TessChoiceIterator TessChoiceIterator;
+typedef enum TessComputeBackend {
+  CB_DEFAULT,
+  CB_CPU,
+  CB_CUDA
+} TessComputeBackend;
 typedef enum TessOcrEngineMode {
   OEM_TESSERACT_ONLY,
   OEM_LSTM_ONLY,
@@ -226,6 +232,9 @@ TESS_API int TessBaseAPIGetSourceYResolution(TessBaseAPI *handle);
 TESS_API const char *TessBaseAPIGetDatapath(TessBaseAPI *handle);
 
 TESS_API void TessBaseAPISetOutputName(TessBaseAPI *handle, const char *name);
+TESS_API void TessBaseAPISetComputeBackend(TessBaseAPI *handle, TessComputeBackend backend);
+TESS_API TessComputeBackend TessBaseAPIGetRequestedComputeBackend(const TessBaseAPI *handle);
+TESS_API TessComputeBackend TessBaseAPIGetActiveComputeBackend(const TessBaseAPI *handle);
 
 TESS_API BOOL TessBaseAPISetVariable(TessBaseAPI *handle, const char *name,
                                      const char *value);

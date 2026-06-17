@@ -85,6 +85,7 @@ public:
 
   // Converts a float network to an int network.
   void ConvertToInt() override;
+  ComputeBackend SetComputeBackend(ComputeBackend backend) override;
 
   // Provides debug output on the weights.
   void DebugWeights() override;

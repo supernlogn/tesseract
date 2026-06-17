@@ -313,6 +313,9 @@ public:
     }
     return false;
   }
+  void SetRequestedComputeBackend(ComputeBackend backend);
+  ComputeBackend RequestedComputeBackend() const;
+  ComputeBackend ActiveComputeBackend() const;
 
   void SetBlackAndWhitelist();
 
@@ -770,6 +773,7 @@ public:
   double_VAR_H(thresholding_smooth_kernel_size);
   double_VAR_H(thresholding_score_fraction);
   INT_VAR_H(tessedit_ocr_engine_mode);
+  INT_VAR_H(lstm_compute_backend);
   STRING_VAR_H(tessedit_char_blacklist);
   STRING_VAR_H(tessedit_char_whitelist);
   STRING_VAR_H(tessedit_char_unblacklist);

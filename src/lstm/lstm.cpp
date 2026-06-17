@@ -209,6 +209,23 @@ void LSTM::ConvertToInt() {
   if (softmax_ != nullptr) {
     softmax_->ConvertToInt();
   }
+  compute_backend_ = CB_CPU;
+}
+
+ComputeBackend LSTM::SetComputeBackend(ComputeBackend backend) {
+  compute_backend_ = backend;
+  for (int w = 0; w < WT_COUNT; ++w) {
+    if (w == GFS && !Is2D()) {
+      continue;
+    }
+    if (gate_weights_[w].SetComputeBackend(backend) != backend) {
+      compute_backend_ = CB_CPU;
+    }
+  }
+  if (softmax_ != nullptr && softmax_->SetComputeBackend(backend) != backend) {
+    compute_backend_ = CB_CPU;
+  }
+  return compute_backend_;
 }
 
 // Sets up the network for training using the given weight_range.

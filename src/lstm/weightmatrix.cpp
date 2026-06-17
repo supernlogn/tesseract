@@ -18,6 +18,8 @@
 #include "weightmatrix.h"
 
 #include <cassert> // for assert
+#include <string>
+#include "cudabackend.h"
 #include "intsimdmatrix.h"
 #include "simddetect.h" // for DotProduct
 #include "statistc.h"
@@ -88,6 +90,10 @@ static bool Serialize(TFile *fp, const GENERIC_2D_ARRAY<TFloat> &tfloat_array) {
 #endif
 }
 
+WeightMatrix::~WeightMatrix() {
+  delete cuda_matrix_;
+}
+
 // Computes matrix.vector v = Wu.
 // u is of size W.dim2() - add_bias_fwd and the output v is of size
 // W.dim1() - skip_bias_back.
@@ -130,6 +136,7 @@ TransposedArray::~TransposedArray() = default;
 int WeightMatrix::InitWeightsFloat(int no, int ni, bool use_adam, float weight_range,
                                    TRand *randomizer) {
   int_mode_ = false;
+  cuda_dirty_ = true;
   wf_.Resize(no, ni, 0.0);
   if (randomizer != nullptr) {
     for (int i = 0; i < no; ++i) {
@@ -149,6 +156,7 @@ int WeightMatrix::InitWeightsFloat(int no, int ni, bool use_adam, float weight_r
 // for all outputs with negative code_map entries. Returns the new number of
 // weights.
 int WeightMatrix::RemapOutputs(const std::vector<int> &code_map) {
+  cuda_dirty_ = true;
   GENERIC_2D_ARRAY<TFloat> old_wf(wf_);
   int old_no = wf_.dim1();
   int new_no = code_map.size();
@@ -181,6 +189,7 @@ int WeightMatrix::RemapOutputs(const std::vector<int> &code_map) {
 // Store a multiplicative scale factor (as a TFloat) that will reproduce
 // the original value, subject to rounding errors.
 void WeightMatrix::ConvertToInt() {
+  cuda_dirty_ = true;
   wi_.ResizeNoInit(wf_.dim1(), wf_.dim2());
   scales_.reserve(wi_.dim1());
   int dim2 = wi_.dim2();
@@ -210,6 +219,34 @@ void WeightMatrix::ConvertToInt() {
     IntSimdMatrix::intSimdMatrix->Init(wi_, shaped_w_, rounded_num_out);
     scales_.resize(rounded_num_out);
   }
+  compute_backend_ = CB_CPU;
+  delete cuda_matrix_;
+  cuda_matrix_ = nullptr;
+}
+
+ComputeBackend WeightMatrix::SetComputeBackend(ComputeBackend backend) {
+  if (int_mode_) {
+    compute_backend_ = CB_CPU;
+    return compute_backend_;
+  }
+  if (backend != CB_CUDA) {
+    compute_backend_ = CB_CPU;
+    return compute_backend_;
+  }
+  if (cuda_matrix_ == nullptr) {
+    cuda_matrix_ = new CudaMatrix();
+  }
+  std::string error;
+  if (!CudaInferenceAvailable(&error) || !cuda_matrix_->Prepare(wf_, &error)) {
+    if (cuda_matrix_ != nullptr) {
+      cuda_matrix_->Invalidate();
+    }
+    compute_backend_ = CB_CPU;
+    return compute_backend_;
+  }
+  cuda_dirty_ = false;
+  compute_backend_ = CB_CUDA;
+  return compute_backend_;
 }
 
 // Allocates any needed memory for running Backward, and zeroes the deltas,
@@ -278,6 +315,8 @@ bool WeightMatrix::Serialize(bool training, TFile *fp) const {
 // Reads from the given file. Returns false in case of error.
 
 bool WeightMatrix::DeSerialize(bool training, TFile *fp) {
+  cuda_dirty_ = true;
+  compute_backend_ = CB_CPU;
   uint8_t mode;
   if (!fp->DeSerialize(&mode)) {
     return false;
@@ -387,6 +426,17 @@ bool WeightMatrix::DeSerializeOld(bool training, TFile *fp) {
 // Asserts that the call matches what we have.
 void WeightMatrix::MatrixDotVector(const TFloat *u, TFloat *v) const {
   assert(!int_mode_);
+  if (compute_backend_ == CB_CUDA) {
+    if (cuda_matrix_ == nullptr) {
+      cuda_matrix_ = new CudaMatrix();
+    }
+    std::string error;
+    if (cuda_matrix_->MatrixDotVector(wf_, u, v, &error)) {
+      cuda_dirty_ = false;
+      return;
+    }
+    compute_backend_ = CB_CPU;
+  }
   MatrixDotVectorInternal(wf_, true, false, u, v);
 }
 
@@ -458,6 +508,7 @@ void WeightMatrix::SumOuterTransposed(const TransposedArray &u, const Transposed
 // num_samples is the quotient to be used in the adam computation iff
 // use_adam_ is true.
 void WeightMatrix::Update(float learning_rate, float momentum, float adam_beta, int num_samples) {
+  cuda_dirty_ = true;
   assert(!int_mode_);
   if (use_adam_ && momentum > 0.0f && num_samples > 0 && num_samples < kAdamCorrectionIterations) {
     learning_rate *= sqrt(1.0f - pow(adam_beta, num_samples));

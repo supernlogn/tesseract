@@ -19,6 +19,7 @@
 #include <tesseract/baseapi.h>
 
 #include <allheaders.h>
+#include "cudabackend.h"
 #include "gmock/gmock-matchers.h"
 
 #include <memory>
@@ -220,6 +221,41 @@ TEST_F(TesseractTest, BasicLSTMTest) {
       file::GetContents(TestDataNameToPath("phototest.gold.txt"), &truth_text, file::Defaults()));
   trim(truth_text);
   EXPECT_STREQ(truth_text.c_str(), ocr_text.c_str());
+  src_pix.destroy();
+}
+
+TEST_F(TesseractTest, LSTMComputeBackendSelection) {
+  tesseract::TessBaseAPI api;
+  api.SetComputeBackend(tesseract::CB_CPU);
+  EXPECT_EQ(tesseract::CB_CPU, api.GetRequestedComputeBackend());
+  EXPECT_EQ(tesseract::CB_CPU, api.GetActiveComputeBackend());
+  if (api.Init(TessdataPath().c_str(), "eng", tesseract::OEM_LSTM_ONLY) == -1) {
+    GTEST_SKIP();
+  }
+  EXPECT_EQ(tesseract::CB_CPU, api.GetActiveComputeBackend());
+}
+
+TEST_F(TesseractTest, LSTMComputeBackendFallbackStillRecognizes) {
+  tesseract::TessBaseAPI api;
+  std::string truth_text;
+  std::string ocr_text;
+  api.SetComputeBackend(tesseract::CB_CUDA);
+  EXPECT_EQ(tesseract::CB_CUDA, api.GetRequestedComputeBackend());
+  if (api.Init(TessdataPath().c_str(), "eng", tesseract::OEM_LSTM_ONLY) == -1) {
+    GTEST_SKIP();
+  }
+  Image src_pix = pixRead(TestDataNameToPath("phototest_2.tif").c_str());
+  CHECK(src_pix);
+  ocr_text = GetCleanedTextResult(&api, src_pix);
+  CHECK_OK(
+      file::GetContents(TestDataNameToPath("phototest.gold.txt"), &truth_text, file::Defaults()));
+  trim(truth_text);
+  EXPECT_STREQ(truth_text.c_str(), ocr_text.c_str());
+  EXPECT_NE(tesseract::CB_DEFAULT, api.GetActiveComputeBackend());
+  std::string cuda_error;
+  if (!CudaInferenceAvailable(&cuda_error)) {
+    EXPECT_EQ(tesseract::CB_CPU, api.GetActiveComputeBackend());
+  }
   src_pix.destroy();
 }
 

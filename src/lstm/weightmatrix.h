@@ -18,6 +18,8 @@
 #ifndef TESSERACT_LSTM_WEIGHTMATRIX_H_
 #define TESSERACT_LSTM_WEIGHTMATRIX_H_
 
+#include <tesseract/publictypes.h>
+
 #include <memory>
 #include <vector>
 #include "intsimdmatrix.h"
@@ -26,6 +28,8 @@
 #include "tprintf.h"
 
 namespace tesseract {
+
+class CudaMatrix;
 
 // Convenience instantiation of GENERIC_2D_ARRAY<TFloat> with additional
 // operations to write a strided vector, so the transposed form of the input
@@ -70,6 +74,7 @@ public:
 class WeightMatrix {
 public:
   WeightMatrix() : int_mode_(false), use_adam_(false) {}
+  ~WeightMatrix();
   // Sets up the network for training. Initializes weights using weights of
   // scale `range` picked according to the random number generator `randomizer`.
   // Note the order is outputs, inputs, as this is the order of indices to
@@ -91,6 +96,10 @@ public:
   // Store a multiplicative scale factor (as a float) that will reproduce
   // the original value, subject to rounding errors.
   void ConvertToInt();
+  ComputeBackend SetComputeBackend(ComputeBackend backend);
+  ComputeBackend compute_backend() const {
+    return compute_backend_;
+  }
   // Returns the size rounded up to an internal factor used by the SIMD
   // implementation for its input.
   int RoundInputs(int size) const {
@@ -182,6 +191,9 @@ private:
   GENERIC_2D_ARRAY<TFloat> dw_sq_sum_;
   // The weights matrix reorganized in whatever way suits this instance.
   std::vector<int8_t> shaped_w_;
+  mutable CudaMatrix *cuda_matrix_ = nullptr;
+  mutable bool cuda_dirty_ = true;
+  mutable ComputeBackend compute_backend_ = CB_CPU;
 };
 
 } // namespace tesseract.

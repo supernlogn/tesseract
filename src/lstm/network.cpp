@@ -84,7 +84,8 @@ Network::Network()
     , num_weights_(0)
     , forward_win_(nullptr)
     , backward_win_(nullptr)
-    , randomizer_(nullptr) {}
+    , randomizer_(nullptr)
+    , compute_backend_(CB_CPU) {}
 Network::Network(NetworkType type, const std::string &name, int ni, int no)
     : type_(type)
     , training_(TS_ENABLED)
@@ -96,7 +97,8 @@ Network::Network(NetworkType type, const std::string &name, int ni, int no)
     , name_(name)
     , forward_win_(nullptr)
     , backward_win_(nullptr)
-    , randomizer_(nullptr) {}
+    , randomizer_(nullptr)
+    , compute_backend_(CB_CPU) {}
 
 // Suspends/Enables/Permanently disables training by setting the training_
 // flag. Serialize and DeSerialize only operate on the run-time data if state
@@ -141,6 +143,11 @@ int Network::InitWeights([[maybe_unused]] float range, TRand *randomizer) {
 // and should not be deleted by any of the networks.
 void Network::SetRandomizer(TRand *randomizer) {
   randomizer_ = randomizer;
+}
+
+ComputeBackend Network::SetComputeBackend(ComputeBackend backend) {
+  compute_backend_ = backend;
+  return compute_backend_;
 }
 
 // Sets needs_to_backprop_ to needs_backprop and returns true if

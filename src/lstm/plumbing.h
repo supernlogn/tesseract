@@ -69,6 +69,7 @@ public:
 
   // Converts a float network to an int network.
   void ConvertToInt() override;
+  ComputeBackend SetComputeBackend(ComputeBackend backend) override;
 
   // Provides a pointer to a TRand for any networks that care to use it.
   // Note that randomizer is a borrowed pointer that should outlive the network

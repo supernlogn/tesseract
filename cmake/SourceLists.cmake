@@ -193,6 +193,7 @@ set(TESSERACT_SRC_DICT
 
 # LSTM module sources
 set(TESSERACT_SRC_LSTM
+    src/lstm/cudabackend.cpp
     src/lstm/convolve.cpp
     src/lstm/fullyconnected.cpp
     src/lstm/functions.cpp
@@ -492,6 +493,7 @@ set(TESSERACT_HDR_INTERNAL
     src/dict/matchdefs.h
     src/dict/stopper.h
     src/dict/trie.h
+    src/lstm/cudabackend.h
     src/lstm/convolve.h
     src/lstm/fullyconnected.h
     src/lstm/functions.h

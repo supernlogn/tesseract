@@ -515,10 +515,12 @@ libtesseract_lstm_la_CPPFLAGS += -I$(top_srcdir)/src/cutil
 libtesseract_lstm_la_CPPFLAGS += -I$(top_srcdir)/src/dict
 libtesseract_lstm_la_CPPFLAGS += -I$(top_srcdir)/src/lstm
 libtesseract_lstm_la_CPPFLAGS += -I$(top_srcdir)/src/viewer
+libtesseract_lstm_la_CPPFLAGS += $(CUDA_CPPFLAGS)
 if !NO_TESSDATA_PREFIX
 libtesseract_lstm_la_CPPFLAGS += -DTESSDATA_PREFIX='"@datadir@"'
 endif
 
+noinst_HEADERS += src/lstm/cudabackend.h
 noinst_HEADERS += src/lstm/convolve.h
 noinst_HEADERS += src/lstm/fullyconnected.h
 noinst_HEADERS += src/lstm/functions.h
@@ -541,7 +543,8 @@ noinst_HEADERS += src/lstm/weightmatrix.h
 
 noinst_LTLIBRARIES += libtesseract_lstm.la
 
-libtesseract_lstm_la_SOURCES = src/lstm/convolve.cpp
+libtesseract_lstm_la_SOURCES = src/lstm/cudabackend.cpp
+libtesseract_lstm_la_SOURCES += src/lstm/convolve.cpp
 libtesseract_lstm_la_SOURCES += src/lstm/fullyconnected.cpp
 libtesseract_lstm_la_SOURCES += src/lstm/functions.cpp
 libtesseract_lstm_la_SOURCES += src/lstm/input.cpp
@@ -558,6 +561,7 @@ libtesseract_lstm_la_SOURCES += src/lstm/reversed.cpp
 libtesseract_lstm_la_SOURCES += src/lstm/series.cpp
 libtesseract_lstm_la_SOURCES += src/lstm/stridemap.cpp
 libtesseract_lstm_la_SOURCES += src/lstm/weightmatrix.cpp
+libtesseract_lstm_la_LIBADD = $(CUDA_LIBS)
 
 # Rules for src/textord.
 
